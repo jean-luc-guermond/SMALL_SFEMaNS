@@ -2,7 +2,7 @@
 !Authors: Jean-Luc Guermond, Lugi Quartapelle, Copyright 1994
 !
 MODULE st_matrix
-
+  USE sorting
 CONTAINS
 
   !=========================================================================
@@ -1114,72 +1114,6 @@ CONTAINS
     DEALLOCATE ( ja_work, nja, a_d )
 
   END SUBROUTINE st_p1_csr
-
-  SUBROUTINE tri_jlg (a,  a_d, n_a_d)
-
-    !  sort in ascending order of the integer array  a  and generation
-    !  of the integer array  a_d  whose first  n_a_d  leading entries
-    !  contain different values in ascending order, while all the
-    !  remaining entries are set to zero
-
-    !  sorting by Shell's method.
-
-    IMPLICIT NONE
-
-    INTEGER, DIMENSION(:), INTENT(INOUT) :: a
-    INTEGER, DIMENSION(:), INTENT(OUT)   :: a_d
-    INTEGER,               INTENT(OUT)   :: n_a_d
-
-    INTEGER :: n, na, inc, i, j, k, ia
-
-    na = SIZE(a)
-
-    !  sort phase
-
-    IF (na == 0) THEN
-       n_a_d = 0
-       RETURN
-    ENDIF
-
-    inc = 1
-    DO WHILE (inc <= na)
-       inc = inc * 3
-       inc = inc + 1
-    ENDDO
-
-    DO WHILE (inc > 1)
-       inc = inc/3
-       DO i = inc + 1, na
-          ia = a(i)
-          j = i
-          DO WHILE (a(j-inc) > ia)
-             a(j) = a(j-inc)
-             j = j - inc
-             IF (j <= inc) EXIT
-          ENDDO
-          a(j) = ia
-       ENDDO
-    ENDDO
-
-    !  compression phase
-
-    n = 1
-    a_d(n) = a(1)
-    DO k = 2, na
-       IF (a(k) > a(k-1)) THEN
-          n = n + 1
-          a_d(n) = a(k)
-       ELSE
-          WRITE(*,*) 'We have a problem in the compression phase of tri_jlg', k, k-1
-       ENDIF
-    ENDDO
-
-    n_a_d = n
-
-    a_d(n_a_d + 1 : na) = 0
-
-  END SUBROUTINE tri_jlg
-
 
   SUBROUTINE st_mhd_csr(jj, jj_sub_c, i_d, list_dom, ia, ja)
 
