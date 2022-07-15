@@ -183,7 +183,7 @@ CONTAINS
 
     INTEGER,      DIMENSION(:), POINTER :: b_list_loc, b_perlist_loc, &
          e_list_loc, e_perlist_loc, p_list_loc, p_perlist_loc
-    INTEGER                             :: n, d_end, f_end, side1, side2, nsize, n_b, n_e, n_p
+    INTEGER                             :: n, side1, side2, nsize, n_b, n_e, n_p
     REAL(KIND=8), DIMENSION(2)          :: e
 
     WRITE (*,*) 'Loading periodic-data file ...'
@@ -748,27 +748,5 @@ CONTAINS
     END DO
 
   END SUBROUTINE bc_prd
-
-
-  FUNCTION last_c_leng (len_str, string) RESULT (leng)
-    !===================================================
-
-    IMPLICIT NONE
-
-    INTEGER, INTENT(IN) :: len_str
-    CHARACTER (LEN=len_str), INTENT(IN) :: string
-    INTEGER :: leng
-
-    INTEGER :: i
-
-    leng = len_str
-
-    DO i=1,len_str
-       IF ( string(i:i) .EQ. ' ' ) THEN
-          leng = i-1; EXIT
-       ENDIF
-    ENDDO
-
-  END FUNCTION last_c_leng
 
 END MODULE periodic
