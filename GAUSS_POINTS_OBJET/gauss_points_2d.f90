@@ -51,7 +51,7 @@ CONTAINS
     CASE(2)
        n_w=6;  n_ws=3; l_G=7; l_Gs=3
     CASE(3)
-       !n_w=10; n_ws=4; l_G=7; l_Gs=4
+       ! n_w=10; n_ws=4; l_G=7; l_Gs=4
        n_w=10; n_ws=4; l_G=12; l_Gs=4
     CASE DEFAULT
        WRITE(*,*) ' FE not programmed yet', type_fe
@@ -122,7 +122,7 @@ CONTAINS
           rj(l, m) = ABS(rjac)*pp(l) !===Sign of Jacobian determinant unknown
        ENDDO
     ENDDO
-    
+
     SELECT CASE(type_fe)
     CASE(1)
        CALL element_1d_p1(wws, dds, pps, n_ws, l_Gs)
@@ -211,31 +211,34 @@ CONTAINS
     SELECT CASE(type_fe)
     CASE(1)
        CALL element_1d_p1_at_nodes (dds_v, n_ws)
+       DO ms = 1, mes
+          DO ns = 1, n_ws
+             DO k = 1, k_d
+                rs = rr(k, js(:,ms))
+                drs(1, k) = SUM(rs * dds_v(:,ns))
+             ENDDO
+             rjacs = SQRT( drs(1,1)**2 + drs(1,2)**2 )
+             mesh%gauss%rnorms_v(1, ns, ms) = -drs(1,2)/rjacs
+             mesh%gauss%rnorms_v(2, ns, ms) = drs(1,1)/rjacs
+             m = mesh%neighs(ms)
+             !===Find correct face and orient normal outwards
+             DO n = 1, n_w
+                IF (MINVAL(ABS(js(:,ms)-jj(n,m)))==0) CYCLE
+                face = n 
+             END DO
+             rs = rr(:,jj(face,m)) - (rr(:,js(1,ms))+rr(:,js(2,ms)))/2
+             x = SUM(mesh%gauss%rnorms_v(:,ns,ms)*rs)
+             IF (x>0) THEN
+                mesh%gauss%rnorms_v(:,ns,ms) = - mesh%gauss%rnorms_v(:,ns,ms)
+             END IF
+          END DO
+       ENDDO
     CASE DEFAULT
+       !Not programmed yet
+       mesh%gauss%rnorms_v = 0.d0
        !WRITE(*,*) 'BUG gauss_points_2d, rnorms_v not programmed yet'
     END SELECT
-    DO ms = 1, mes
-       DO ns = 1, n_ws
-          DO k = 1, k_d
-             rs = rr(k, js(:,ms))
-             drs(1, k) = SUM(rs * dds_v(:,ns))
-          ENDDO
-          rjacs = SQRT( drs(1,1)**2 + drs(1,2)**2 )
-          mesh%gauss%rnorms_v(1, ns, ms) = -drs(1,2)/rjacs
-          mesh%gauss%rnorms_v(2, ns, ms) = drs(1,1)/rjacs
-          m = mesh%neighs(ms)
-          !===Find correct face and orient normal outwards
-          DO n = 1, n_w
-             IF (MINVAL(ABS(js(:,ms)-jj(n,m)))==0) CYCLE
-             face = n 
-          END DO
-          rs = rr(:,jj(face,m)) - (rr(:,js(1,ms))+rr(:,js(2,ms)))/2
-          x = SUM(mesh%gauss%rnorms_v(:,ns,ms)*rs)
-          IF (x>0) THEN
-             mesh%gauss%rnorms_v(:,ns,ms) = - mesh%gauss%rnorms_v(:,ns,ms)
-          END IF
-       END DO
-    ENDDO
+
 
     !===Cell interface (JLG, April 2009)
     IF (mesh%edge_stab) THEN

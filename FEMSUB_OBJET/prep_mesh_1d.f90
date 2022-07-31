@@ -2,7 +2,6 @@ MODULE prep_mesh_1d
   IMPLICIT NONE
 CONTAINS
     SUBROUTINE load_mesh_1d(dir, fil, type_fe, mesh)
-    USE input_data
     USE mod_gauss_points_1d
     USE def_type_mesh
     IMPLICIT NONE

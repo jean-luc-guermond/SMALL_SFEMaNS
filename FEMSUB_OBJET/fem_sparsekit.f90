@@ -159,46 +159,37 @@ CONTAINS
     USE Gauss_points
 
     IMPLICIT NONE
-
+    TYPE(mesh_type)                   :: mesh
     REAL(KIND=8),                 INTENT(IN)    :: alpha
     INTEGER,      DIMENSION(:),   INTENT(IN)    :: ia
     INTEGER,      DIMENSION(:),   INTENT(IN)    :: ja
     REAL(KIND=8), DIMENSION(:),   INTENT(INOUT) :: a0
-
+    INTEGER,      DIMENSION(mesh%gauss%n_w) :: j_loc
+    REAL(KIND = 8), DIMENSION(mesh%gauss%k_d, mesh%gauss%n_w, mesh%gauss%l_G) :: dwm
+    REAL(KIND=8) :: x
     INTEGER :: m, l, ni, nj, i, j, p
-    REAL(KIND=8) :: al, x
-
-    TYPE(mesh_type), TARGET                     :: mesh
-    INTEGER,      DIMENSION(:,:), POINTER       :: jj
-    INTEGER,                      POINTER       :: me
-
-    CALL gauss(mesh)
-    jj => mesh%jj
-    me => mesh%me
-
-    DO m = 1, me
-
-       DO l = 1, l_G
-
-          al = alpha * rj(l,m)
-
-          DO nj = 1, n_w;  j = jj(nj, m)
-             DO ni = 1, n_w;  i = jj(ni, m)
-
-                !               IF (j >= i) THEN
-                x = al * SUM(dw(:,nj,l,m) * dw(:,ni,l,m))
-                DO p = ia(i),  ia(i+1) - 1
-                   IF (ja(p) == j) THEN;  a0(p) = a0(p) + x;  EXIT;
-                   ENDIF
-                ENDDO
-                !               ENDIF
-
+    
+    DO m = 1, mesh%me
+       j_loc = mesh%jj(:,m)
+       dwm = mesh%gauss%dw(:,:,:,m)
+       DO ni = 1, mesh%gauss%n_w
+          i = j_loc(ni)
+          DO nj = 1, mesh%gauss%n_w
+             j = j_loc(nj)
+             x = 0.d0
+             DO l = 1, mesh%gauss%l_G
+                x = x + alpha*SUM(dwm(:,nj,l)*dwm(:,ni,l))*mesh%gauss%rj(l,m)
+             END DO
+             DO p = ia(i),  ia(i+1) - 1
+                IF (ja(p) == j) THEN
+                   a0(p) = a0(p) + x
+                   EXIT
+                ENDIF
              ENDDO
           ENDDO
-
        ENDDO
     ENDDO
-
+ 
   END SUBROUTINE qs_11_M
 
   SUBROUTINE qs_11_bb_p1_M (mesh, alpha, bcd)
