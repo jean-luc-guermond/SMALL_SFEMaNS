@@ -13,7 +13,7 @@ MODULE prep_maill
 
 CONTAINS
 
- SUBROUTINE load_mesh_free_format_iso(dir, fil, list_dom, type_fe, mesh, mesh_formatted, edge_stab)
+  SUBROUTINE load_mesh_free_format_iso(dir, fil, list_dom, type_fe, mesh, mesh_formatted, edge_stab, opt_mesh)
     USE def_type_mesh
     USE chaine_caractere
     USE mod_gauss_points_2d
@@ -27,6 +27,7 @@ CONTAINS
     TYPE(mesh_type)                   :: mesh
     LOGICAL,               INTENT(IN) :: mesh_formatted !formatted <=> mesh_formatted=.true.
     LOGICAL, OPTIONAL,     INTENT(IN) :: edge_stab
+    TYPE(mesh_type), OPTIONAL         :: opt_mesh
     INTEGER, DIMENSION(3)             :: a_d
     INTEGER, DIMENSION(2)             :: a_ds
     INTEGER, ALLOCATABLE, DIMENSION(:)   :: nouv_nd, nouv_el, nouv_els, &
@@ -43,6 +44,80 @@ CONTAINS
     CHARACTER(len=20)                 :: text
     CHARACTER(len=2)                  :: truc
 
+    IF (present(opt_mesh)) THEN
+       np =opt_mesh%np
+       nw =opt_mesh%gauss%n_w
+       me =opt_mesh%me
+       nws=opt_mesh%gauss%n_ws
+       mes=opt_mesh%mes
+       kd = 2
+       nwneigh = 3
+
+       ALLOCATE (jj_lect(nw,me),neigh_lect(nwneigh,me),i_d_lect(me))
+       jj_lect    = opt_mesh%jj
+       neigh_lect = opt_mesh%neigh
+       i_d_lect   = opt_mesh%i_d
+
+       ALLOCATE (jjs_lect(nws,mes), neighs_lect(mes), sides_lect(mes))
+       jjs_lect    = opt_mesh%jjs
+       neighs_lect = opt_mesh%neighs
+       sides_lect  = opt_mesh%sides
+
+       ALLOCATE(rr_lect(kd,np))
+       rr_lect = opt_mesh%rr
+    ELSE
+       WRITE (*,*) 'Loading mesh-file ...'
+       IF (mesh_formatted) THEN
+          OPEN(30,FILE=TRIM(ADJUSTL(dir))//'/'//TRIM(ADJUSTL(fil)),FORM='formatted')
+       ELSE
+          OPEN(30,FILE=TRIM(ADJUSTL(dir))//'/'//TRIM(ADJUSTL(fil)),FORM='unformatted')
+       END IF
+
+       !===Read P1 mesh
+       IF (mesh_formatted) THEN
+          READ  (30, *)  np,  nw,  me,  nws,  mes
+       ELSE
+          READ(30)  np,  nw,  me,  nws,  mes
+       END IF
+
+       IF (nw==3 .AND. nws==2) THEN !===Decide about space dimension
+          kd = 2; nwneigh = 3
+       ELSE IF (nw==4 .AND. nws==3) THEN
+          kd = 3; nwneigh = 4
+       ELSE 
+          WRITE(*,*) ' Finite element not yet programmed ', nw, nws
+          STOP
+       END IF
+
+       ALLOCATE (jj_lect(nw,me),neigh_lect(nwneigh,me),i_d_lect(me))
+       IF (mesh_formatted) THEN
+          DO m = 1, me
+             READ(30,*) jj_lect(:,m), neigh_lect(:,m), i_d_lect(m)
+          END DO
+       ELSE
+          READ(30) jj_lect, neigh_lect, i_d_lect
+       END IF
+
+       ALLOCATE (jjs_lect(nws,mes), neighs_lect(mes), sides_lect(mes))
+       IF (mesh_formatted) THEN
+          DO ms = 1, mes
+             READ(30,*) jjs_lect(:,ms), neighs_lect(ms), sides_lect(ms)
+          END DO
+       ELSE
+          READ(30) jjs_lect, neighs_lect, sides_lect
+       END IF
+
+       ALLOCATE(rr_lect(kd,np))
+       IF (mesh_formatted) THEN
+          DO n = 1, np
+             READ(30,*) rr_lect(:,n)
+          END DO
+       ELSE
+          READ(30) rr_lect
+       END IF
+       CLOSE(30)
+    END IF
+    
     text = 'Mesh'   
     d_end = last_c_leng (20, text)
     DO n = 1, SIZE(list_dom)   
@@ -63,46 +138,11 @@ CONTAINS
        WRITE(*,*) ' BUG load_mesh_free_format_iso, type_fe not defined'
        STOP
     END IF
-
-    WRITE (*,*) 'Loading mesh-file ...'
-    IF (mesh_formatted) THEN
-       OPEN(30,FILE=TRIM(ADJUSTL(dir))//'/'//TRIM(ADJUSTL(fil)),FORM='formatted')
-    ELSE
-       OPEN(30,FILE=TRIM(ADJUSTL(dir))//'/'//TRIM(ADJUSTL(fil)),FORM='unformatted')
-    END IF
     OPEN(UNIT=20,FILE=text, FORM='formatted', STATUS='unknown')
-
-    !  READ GRID DATA AND ARRAY ALLOCATION ----------------------------------------
- 
-    !===Read P1 mesh
-    IF (mesh_formatted) THEN
-       READ  (30, *)  np,  nw,  me,  nws,  mes
-    ELSE
-       READ(30)  np,  nw,  me,  nws,  mes
-    END IF
-
-    IF (nw==3 .AND. nws==2) THEN ! Decide about space dimension
-       kd = 2; nwneigh = 3
-    ELSE IF (nw==4 .AND. nws==3) THEN
-       kd = 3; nwneigh = 4
-    ELSE 
-       WRITE(*,*) ' Finite element not yet programmed ', nw, nws
-       STOP
-    END IF
-
-    ALLOCATE (jj_lect(nw,me),neigh_lect(nwneigh,me),i_d_lect(me))
+    
     ALLOCATE (nouv_nd(np),   ancien_nd(np), virgin_nd(np), &
          nouv_el(0:me), ancien_el(me), virgin_el(me))
-
     nouv_el = 0
-
-    IF (mesh_formatted) THEN
-       DO m = 1, me
-          READ(30,*) jj_lect(:,m), neigh_lect(:,m), i_d_lect(m)
-       END DO
-    ELSE
-       READ(30) jj_lect, neigh_lect, i_d_lect
-    END IF
 
     !===Change enumeration
     virgin_nd = .TRUE.
@@ -133,15 +173,6 @@ CONTAINS
        mesh%i_d(m)     = i_d_lect(ancien_el(m))
     END DO
     !===End change enumeration
-    
-    ALLOCATE (jjs_lect(nws,mes), neighs_lect(mes), sides_lect(mes))
-    IF (mesh_formatted) THEN
-       DO ms = 1, mes
-          READ(30,*) jjs_lect(:,ms), neighs_lect(ms), sides_lect(ms)
-       END DO
-    ELSE
-       READ(30) jjs_lect, neighs_lect, sides_lect
-    END IF
 
     !===Change enumeration
     ALLOCATE(nouv_els(mes), ancien_els(mes))
@@ -198,14 +229,6 @@ CONTAINS
     !===End check number of edges
     !===Change enumeration
 
-    ALLOCATE(rr_lect(kd,np))
-    IF (mesh_formatted) THEN
-       DO n = 1, np
-          READ(30,*) rr_lect(:,n)
-       END DO
-    ELSE
-       READ(30) rr_lect
-    END IF
     ALLOCATE(mesh_p1%rr(kd,mesh_p1%np))
     mesh_p1%rr = rr_lect(:,ancien_nd(1:mesh_p1%np))
 
@@ -231,7 +254,7 @@ CONTAINS
        mesh_p1%jjs(:,ms)=a_ds
     END DO
     !===End make sure indexing in done with the lowest to highest index convention
-    
+
     DEALLOCATE(jj_lect, neigh_lect, i_d_lect)
     DEALLOCATE(jjs_lect, neighs_lect, sides_lect)
     DEALLOCATE(rr_lect, virgin_el, virgin_nd)
@@ -266,7 +289,7 @@ CONTAINS
     END IF
     DEALLOCATE(mesh_p1%jj, mesh_p1%jjs, mesh_p1%rr, mesh_p1%neigh, mesh_p1%neighs)
     !===End Prepare actual mesh
-    
+
     ALLOCATE(mesh%iis(nws_new,mesh%mes))
     CALL dirichlet_nodes(mesh%jjs, SPREAD(1,1,mesh%mes), SPREAD(.TRUE.,1,1), mesh%j_s)
     CALL surf_nodes_i(mesh%jjs, mesh%j_s,  mesh%iis)
@@ -296,9 +319,9 @@ CONTAINS
        STOP
     END IF
     !===End Create Gauss points
-    
+
     CLOSE(20)
-    CLOSE(30)
+
   END SUBROUTINE load_mesh_free_format_iso
 
   SUBROUTINE create_iso_grid(jj_in, jjs_in, rr_in, m_op, neigh_el,&
