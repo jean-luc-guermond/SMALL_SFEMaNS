@@ -1,3 +1,0 @@
-/home/guermond/SFEMaNS/SMALL_SFEMaNS/BUILD/CMakeFiles/rebuild_cache.dir
-/home/guermond/SFEMaNS/SMALL_SFEMaNS/BUILD/CMakeFiles/edit_cache.dir
-/home/guermond/SFEMaNS/SMALL_SFEMaNS/BUILD/CMakeFiles/SMALL_SFEMaNS.dir
