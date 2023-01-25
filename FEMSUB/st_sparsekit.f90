@@ -527,6 +527,39 @@ CONTAINS
     END DO
   END SUBROUTINE st_csr_bloc
 
+   SUBROUTINE st_csr_block_local(ia,ja,ia_b,ja_b,n_b)
+    ! Builds the CSR structure of a 3D vector matrix
+    ! from its scalar counterpart.
+    IMPLICIT NONE
+    INTEGER, DIMENSION(:), INTENT(IN)  :: ia, ja
+    INTEGER, DIMENSION(:), POINTER     :: ia_b, ja_b
+    INTEGER,               INTENT(IN)  :: n_b  ! Number of blocs
+    INTEGER :: ki, kj, i, ib, jb, p, pb, bloc_size, np, nnz
+    np = SIZE(ia) - 1
+    nnz = ia(np+1) - ia(1)
+    ALLOCATE (ia_b(n_b*np+1), ja_b(n_b*n_b*nnz))
+    bloc_size = SIZE(ia) - 1
+    ia_b(1) = ia(1)
+    DO i = 1, bloc_size
+       DO ki = 1, n_b
+          ib = (i-1)*n_b + ki
+          ia_b(ib+1) = ia_b(ib) + n_b*(ia(i+1) - ia(i))
+       END DO
+    END DO
+    DO i = 1, bloc_size
+       DO ki = 1, n_b
+          ib = (i-1)*n_b + ki
+          DO p = ia(i), ia(i+1) - 1
+             DO kj = 1, n_b
+                jb = (ja(p)-1)*n_b + kj
+                pb = ia_b(ib) + (p-ia(i))*n_b + kj-1
+                ja_b(pb) = jb
+             END DO
+          END DO
+       END DO
+    END DO
+  END SUBROUTINE st_csr_block_local
+
   !=========================================================================
 
   SUBROUTINE st_csr_p2_opt(np, jj, neigh, ia, ja)

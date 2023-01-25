@@ -38,12 +38,9 @@ CONTAINS
 
     WRITE (*,*) 'Loading periodic-data file ...'
 
-    d_end = last_c_leng (64, dir)
-    f_end = last_c_leng (64, fil)
+    OPEN  (30,FILE=trim(adjustl(dir))//'/'//trim(adjustl(fil)),FORM='formatted')
 
-    OPEN  (30,FILE=dir(1:d_end)//'/'//fil(1:f_end),FORM='formatted')
-
-    CALL read_until(30, 'data_periodic')
+    CALL read_until(30, '===data_periodic===')
     READ  (30, *)  mesh%periodic%n_bord
     IF (mesh%periodic%n_bord .GT. 20) THEN
        WRITE(*,*) 'PREP_MESH_PERIODIC: trop de bords periodiques'
@@ -71,21 +68,19 @@ CONTAINS
     USE def_type_mesh
     USE chaine_caractere
     IMPLICIT NONE
-    CHARACTER(len=64),       INTENT(IN) :: dir,fil
+    CHARACTER(*),       INTENT(IN) :: dir,fil
     TYPE(mesh_type)                     :: mesh
     TYPE(periodic_type)                 :: periodic
 
     INTEGER,      DIMENSION(:), POINTER :: list_loc, perlist_loc 
-    INTEGER                             :: n, d_end, f_end, side1, side2
+    INTEGER                             :: n, side1, side2
     REAL(KIND=8), DIMENSION(:), POINTER :: e
 
     ALLOCATE(e(SIZE(mesh%rr,1)))
     WRITE (*,*) 'Loading periodic-data file ...'
-    d_end = last_c_leng (64, dir)
-    f_end = last_c_leng (64, fil)
 
-    OPEN  (30,FILE=dir(1:d_end)//'/'//fil(1:f_end),FORM='formatted')
-    CALL read_until(30, 'data_periodic')
+    OPEN  (30,FILE=trim(adjustl(dir))//'/'//trim(adjustl(fil)),FORM='formatted')
+    CALL read_until(30, '===data_periodic===')
     READ  (30, *)  periodic%n_bord
     IF (periodic%n_bord .GT. 20) THEN
        WRITE(*,*) 'PREP_MESH_PERIODIC: too many periodic sides'
@@ -117,24 +112,21 @@ CONTAINS
     USE chaine_caractere
     USE def_type_mesh
     IMPLICIT NONE
-    CHARACTER(len=64),       INTENT(IN) :: dir,fil
+    CHARACTER(*),       INTENT(IN) :: dir,fil
     TYPE(mesh_type)                     :: mesh
     TYPE(periodic_type)                 :: periodic
     INTEGER,                 INTENT(IN) :: nb_bloc
 
     INTEGER,      DIMENSION(:), POINTER :: list_loc, perlist_loc
-    INTEGER                             :: n, d_end, f_end, side1, side2, nsize, n_b
+    INTEGER                             :: n, side1, side2, nsize, n_b
     INTEGER                             :: k, k_deb, k_fin 
     REAL(KIND=8), DIMENSION(2)          :: e
 
     WRITE (*,*) 'Loading periodic-data file ...'
 
-    d_end = last_c_leng (64, dir)
-    f_end = last_c_leng (64, fil)
+    OPEN  (30,FILE=trim(adjustl(dir))//'/'//trim(adjustl(fil)),FORM='formatted')
 
-    OPEN  (30,FILE=dir(1:d_end)//'/'//fil(1:f_end),FORM='formatted')
-
-    CALL read_until(30, 'data_periodic')
+    CALL read_until(30, '===data_periodic===')
     READ  (30, *)  periodic%n_bord
     IF (periodic%n_bord .GT. 20) THEN
        WRITE(*,*) 'PREP_MESH_PERIODIC: trop de bords periodiques'

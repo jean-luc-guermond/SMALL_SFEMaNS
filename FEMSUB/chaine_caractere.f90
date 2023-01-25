@@ -108,8 +108,8 @@ CONTAINS
        d_end =   last_of_string(control)
        IF (control(d_start:d_end)==string) RETURN
     END DO
-11  WRITE(*,*) ' Erreur de lecture '; STOP
-22  WRITE(*,*) ' l''intruction ',string,' non trouvee'; STOP
+11  WRITE(*,*) ' Reading error '; STOP
+22  WRITE(*,*) ' Intruction ''',string,''' non found'; STOP
 
   END SUBROUTINE read_until
 
@@ -131,7 +131,7 @@ CONTAINS
        IF (control(d_start:d_end)==string) RETURN
     END DO
 
-11  WRITE(*,*) ' Erreur de lecture '; STOP
+11  WRITE(*,*) ' Reading error  '; STOP
 22  okay = .FALSE.; RETURN
 
   END SUBROUTINE find_string

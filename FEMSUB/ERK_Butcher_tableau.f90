@@ -212,7 +212,7 @@ CONTAINS
              0.2680292384753062d0,-0.1064595934043306d0, 0.3630808781993861d0/)    
     CASE default
        WRITE(*,*) ' BUG in init_bt: wrong sv'
-       STOP
+       STOP 'fail'
     END SELECT
     IF (this%sv>0) THEN
        this%lp_of_l=1
