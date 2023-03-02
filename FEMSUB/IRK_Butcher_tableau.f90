@@ -34,7 +34,7 @@ CONTAINS
     this%lp_of_l = 0
     this%C(this%s+1)=1.d0
     SELECT CASE(asv)
-       
+
     CASE(21) !===Equi IRK2, ERK(2,2;1) two-stage, 2nd order
        this%C=(/0.d0,0.5d0,1.d0/)
        this%lp_of_l=(/1,1,2/)
@@ -48,7 +48,15 @@ CONTAINS
        this%A(2,:)=(/1.d0/3-gamma, gamma, 0.d0 /)
        this%A(3,:)=(/gamma, 2.d0/3-2.d0*gamma, gamma /)
        this%A(4,:)=(/0.25d0,0.d0,0.75d0/)
-      
+       
+    CASE (33) !===Crouzeix-Norsett three-stage, 3nd order
+       gamma = 1.d0/2*(1.d0 + 1.d0/SQRT(3.d0))
+       this%C=(/0.d0,gamma,1.d0-gamma,1.d0/)
+       this%lp_of_l=(/1,1,1,2/)
+       this%A(2,:)=(/0.d0, gamma, 0.d0 /)
+       this%A(3,:)=(/0.d0, 1.d0-2.d0*gamma, gamma /)
+       this%A(4,:)=(/0.d0,1.d0/2,1.d0/2/)
+         
     CASE(41) !===Equi IRK4  ERK(4,3;1) 
        this%C=(/0.d0,1.d0/4,0.5d0,3.d0/4,1.d0/)
        this%lp_of_l=(/1,1,2,3,4/)

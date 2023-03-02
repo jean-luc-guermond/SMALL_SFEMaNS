@@ -14,6 +14,7 @@ CONTAINS
     IMPLICIT NONE
     CLASS(BT), INTENT(inout) :: this
     INTEGER :: asv
+    REAL(KIND=8) :: gamma
     asv= ABS(this%sv)
     this%s = (asv-MODULO(asv,10))/10
     IF (ASSOCIATED(this%C)) THEN
@@ -33,6 +34,7 @@ CONTAINS
     this%lp_of_l = 0
     this%C(this%s+1)=1.d0
     SELECT CASE(asv)
+ 
     CASE(21) !===Equi RK2, ERK(2,2;1) two-stage, 2nd order
        this%C=(/0.d0,0.5d0,1.d0/)
        this%lp_of_l=(/1,1,2/)
@@ -60,6 +62,16 @@ CONTAINS
        this%A(4,1)=1.d0/6
        this%A(4,2)=1.d0/6
        this%A(4,3)=2.d0/3
+    CASE (33) !===Crouzeix-Norsett three-stage, 3nd order
+       gamma = 1.d0/2*(1.d0 + 1.d0/SQRT(3.d0))
+       this%C=(/0.d0,gamma,1.d0-gamma,1.d0/)
+       this%lp_of_l=(/1,1,1,2/)
+       this%A(2,1)=this%C(2)
+       this%A(3,1)=gamma-1.d0
+       this%A(3,2)=2*(1.d0-gamma)
+       this%A(4,1)=0.d0
+       this%A(4,2)=1.d0/2
+       this%A(4,3)=1.d0/2
     CASE (41) !===Equi RK4  ERK(4,3,1) (seems to be only third-order)
        this%C=(/0.d0,1.d0/4,0.5d0,3.d0/4,1.d0/)
        this%lp_of_l=(/1,1,2,3,4/)
