@@ -40,6 +40,12 @@ CONTAINS
        this%lp_of_l=(/1,1,2/)
        this%A(2,:)=(/0.d0,0.5d0/)
        this%A(3,:)=(/0.d0,1.d0/)
+      
+    CASE(22) !===SSP IRK2, ERK(2,2;1/2) two-stage, 2nd order
+       this%C=(/0.d0,1.d0,1.d0/)
+       this%lp_of_l=(/1,1,2/)
+       this%A(2,:)=(/0.5d0,0.5d0/)
+       this%A(3,:)=(/0.5d0,0.5d0/)
 
     CASE(31) !===Equi IRK3 ERK(3,3;1) three-stage, 3nd order
        gamma=(1.d0+1.d0/sqrt(3.d0))/2
