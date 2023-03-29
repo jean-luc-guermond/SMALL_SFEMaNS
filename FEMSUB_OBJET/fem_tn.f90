@@ -614,12 +614,43 @@ SUBROUTINE nv_1_bloc (mesh, gg,  t)
 
    t = SQRT(t)
 
-END SUBROUTINE nv_1_bloc
+ END SUBROUTINE nv_1_bloc
 
-SUBROUTINE nv_l1 (mesh, gg,  t)
-!===============================
+ SUBROUTINE nv_1_loc_bloc (mesh, gg,  t)
+   !===============================
+   !  sqrt(<< D.g, D.g >>)   ===>   t
+   USE Gauss_points
+   IMPLICIT NONE
+   REAL(KIND=8), DIMENSION(:), INTENT(IN)  :: gg
+   REAL(KIND=8),                 INTENT(OUT) :: t
+   INTEGER ::  m, l, k, n, bloc_size
+   REAL(KIND=8) :: s
+   TYPE(mesh_type), TARGET                     :: mesh
+   INTEGER,      DIMENSION(:,:), POINTER       :: jj
+   INTEGER,                      POINTER       :: me
+   CALL gauss(mesh)
+   jj => mesh%jj
+   me => mesh%me
+   bloc_size = SIZE(gg)/k_d
+   t = 0
+   DO m = 1, me
+      DO l = 1, l_G
+         s = 0
+         DO k = 1, k_d
+            DO n = 1, n_w
+               s = s + gg((jj(n,m)-1)*k_d+k) * dw(k,n,l,m)
+            END DO
+         END DO
+         t = t + rj(l,m) * (s**2)
+      ENDDO
+   ENDDO
+   t = SQRT(t)
+ END SUBROUTINE nv_1_loc_bloc
 
-!  << |D.g| >>   ===>   t
+ SUBROUTINE nv_l1 (mesh, gg,  t)
+   !===============================
+
+   !  << |D.g| >>   ===>   t
 
    USE Gauss_points
 
@@ -655,13 +686,13 @@ SUBROUTINE nv_l1 (mesh, gg,  t)
       ENDDO
    ENDDO
 
-END SUBROUTINE nv_l1
-!------------------------------------------------------------------------------
+ END SUBROUTINE nv_l1
+ !------------------------------------------------------------------------------
 
-SUBROUTINE nc_1 (mesh, gg,  t)
-!===============================
+ SUBROUTINE nc_1 (mesh, gg,  t)
+   !===============================
 
-!  sqrt(<< (D x g).(D x g) >>)   ===>   t
+   !  sqrt(<< (D x g).(D x g) >>)   ===>   t
 
    USE Gauss_points
 
@@ -689,7 +720,7 @@ SUBROUTINE nc_1 (mesh, gg,  t)
          s = 0
          DO k = 1, k_d;  k1 = MODULO(k, k_d) + 1;  k2 = MODULO(k + 1, k_d) + 1
             s = s + SUM(gg(k2,jj(:,m)) * dw(k1,:,l,m)   &
-                      - gg(k1,jj(:,m)) * dw(k2,:,l,m))**2
+                 - gg(k1,jj(:,m)) * dw(k2,:,l,m))**2
          ENDDO
 
          t = t + s * rj(l,m)
@@ -699,14 +730,14 @@ SUBROUTINE nc_1 (mesh, gg,  t)
 
    t = SQRT(t)
 
-END SUBROUTINE nc_1
+ END SUBROUTINE nc_1
 
-!------------------------------------------------------------------------------
+ !------------------------------------------------------------------------------
 
-SUBROUTINE nb_1 (mesh, gg,  t)
-!===============================
+ SUBROUTINE nb_1 (mesh, gg,  t)
+   !===============================
 
-!  sqrt(< (D x g . k) (D x g . k) >)   ===>   t     ( 2d only )
+   !  sqrt(< (D x g . k) (D x g . k) >)   ===>   t     ( 2d only )
 
    USE Gauss_points
 
@@ -732,7 +763,7 @@ SUBROUTINE nb_1 (mesh, gg,  t)
       DO l = 1, l_G
 
          s = SUM(gg(2,jj(:,m)) * dw(1,:,l,m)   &
-               - gg(1,jj(:,m)) * dw(2,:,l,m))**2
+              - gg(1,jj(:,m)) * dw(2,:,l,m))**2
 
          t = t + s * rj(l,m)
 
@@ -741,12 +772,12 @@ SUBROUTINE nb_1 (mesh, gg,  t)
 
    t = SQRT(t)
 
-END SUBROUTINE nb_1
+ END SUBROUTINE nb_1
 
-SUBROUTINE nb_1_bloc (mesh, gg,  t)
-!===============================
+ SUBROUTINE nb_1_bloc (mesh, gg,  t)
+   !===============================
 
-!  sqrt(< (D x g . k) (D x g . k) >)   ===>   t     ( 2d only )
+   !  sqrt(< (D x g . k) (D x g . k) >)   ===>   t     ( 2d only )
 
    USE Gauss_points
 
@@ -772,7 +803,7 @@ SUBROUTINE nb_1_bloc (mesh, gg,  t)
       DO l = 1, l_G
 
          s = SUM(gg(bloc_size+jj(:,m)) * dw(1,:,l,m)   &
-               - gg(jj(:,m)) * dw(2,:,l,m))**2
+              - gg(jj(:,m)) * dw(2,:,l,m))**2
 
          t = t + s * rj(l,m)
 
@@ -781,13 +812,13 @@ SUBROUTINE nb_1_bloc (mesh, gg,  t)
 
    t = SQRT(t)
 
-END SUBROUTINE nb_1_bloc
-!------------------------------------------------------------------------------
+ END SUBROUTINE nb_1_bloc
+ !------------------------------------------------------------------------------
 
-SUBROUTINE tb_00_s (mesh, fs, gs,  t)
-!===========================================
+ SUBROUTINE tb_00_s (mesh, fs, gs,  t)
+   !===========================================
 
-!  < fs tau_s.gs >_s   ===>   t     ( 2d only )
+   !  < fs tau_s.gs >_s   ===>   t     ( 2d only )
 
    USE Gauss_points
 
@@ -825,14 +856,14 @@ SUBROUTINE tb_00_s (mesh, fs, gs,  t)
       ENDDO
    ENDDO
 
-END SUBROUTINE tb_00_s
+ END SUBROUTINE tb_00_s
 
-!------------------------------------------------------------------------------
+ !------------------------------------------------------------------------------
 
-SUBROUTINE ts_00 (mesh, f1, f2,  t)
-!====================================
+ SUBROUTINE ts_00 (mesh, f1, f2,  t)
+   !====================================
 
-!  < f1 f2 >   ===>   t
+   !  < f1 f2 >   ===>   t
 
    USE Gauss_points
 
@@ -857,19 +888,19 @@ SUBROUTINE ts_00 (mesh, f1, f2,  t)
       DO l = 1, l_G
 
          t = t + SUM(f1(jj(:,m)) * ww(:,l))   &
-               * SUM(f2(jj(:,m)) * ww(:,l)) * rj(l,m)
+              * SUM(f2(jj(:,m)) * ww(:,l)) * rj(l,m)
 
       ENDDO
    ENDDO
 
-END SUBROUTINE ts_00
+ END SUBROUTINE ts_00
 
-!------------------------------------------------------------------------------
+ !------------------------------------------------------------------------------
 
-SUBROUTINE ts_11 (mesh, f1, f2,  t)
-!====================================
+ SUBROUTINE ts_11 (mesh, f1, f2,  t)
+   !====================================
 
-!  << (Df1).(Df2) >>   ===>   t
+   !  << (Df1).(Df2) >>   ===>   t
 
    USE Gauss_points
 
@@ -897,7 +928,7 @@ SUBROUTINE ts_11 (mesh, f1, f2,  t)
          s = 0
          DO k = 1, k_d
             s = s + SUM(f1(jj(:,m)) * dw(k,:,l,m))   &
-                  * SUM(f2(jj(:,m)) * dw(k,:,l,m))
+                 * SUM(f2(jj(:,m)) * dw(k,:,l,m))
          ENDDO
 
          t = t + s * rj(l,m)
@@ -905,14 +936,14 @@ SUBROUTINE ts_11 (mesh, f1, f2,  t)
       ENDDO
    ENDDO
 
-END SUBROUTINE ts_11
+ END SUBROUTINE ts_11
 
-!------------------------------------------------------------------------------
+ !------------------------------------------------------------------------------
 
-SUBROUTINE ns_adv_l1 (mesh, gg, ff,  t)
-!====================================
+ SUBROUTINE ns_adv_l1 (mesh, gg, ff,  t)
+   !====================================
 
-!  SQRT <<|g.(Df)| >>   ===>   t
+   !  SQRT <<|g.(Df)| >>   ===>   t
 
    USE Gauss_points
 
@@ -961,12 +992,12 @@ SUBROUTINE ns_adv_l1 (mesh, gg, ff,  t)
       ENDDO
    ENDDO
 
-END SUBROUTINE ns_adv_l1
+ END SUBROUTINE ns_adv_l1
 
-SUBROUTINE ns_adv (mesh, gg, ff,  t)
-!====================================
+ SUBROUTINE ns_adv (mesh, gg, ff,  t)
+   !====================================
 
-!  SQRT << ff^2 + (g.(Df))^2 >>   ===>   t
+   !  SQRT << ff^2 + (g.(Df))^2 >>   ===>   t
 
    USE Gauss_points
 
@@ -1023,14 +1054,14 @@ SUBROUTINE ns_adv (mesh, gg, ff,  t)
 
    t = SQRT(t)
 
-END SUBROUTINE ns_adv
+ END SUBROUTINE ns_adv
 
-!------------------------------------------------------------------------------
+ !------------------------------------------------------------------------------
 
-SUBROUTINE ns_01 (mesh, gg, ff,  t)
-!====================================
+ SUBROUTINE ns_01 (mesh, gg, ff,  t)
+   !====================================
 
-!  SQRT << (g.(Df))^2 >>   ===>   t
+   !  SQRT << (g.(Df))^2 >>   ===>   t
 
    USE Gauss_points
 
@@ -1059,7 +1090,7 @@ SUBROUTINE ns_01 (mesh, gg, ff,  t)
          s = 0
          DO k = 1, k_d
             s = s + (SUM(gg(k, jj(:,m)) * ww(:,l))   &
-                  * SUM(ff(jj(:,m)) * dw(k,:,l,m)))**2
+                 * SUM(ff(jj(:,m)) * dw(k,:,l,m)))**2
          ENDDO
 
          t = t + s * rj(l,m)
@@ -1068,12 +1099,12 @@ SUBROUTINE ns_01 (mesh, gg, ff,  t)
    ENDDO
    t = SQRT(t)
 
-END SUBROUTINE ns_01
+ END SUBROUTINE ns_01
 
-SUBROUTINE ts_01 (mesh, gg, ff,  t)
-!====================================
+ SUBROUTINE ts_01 (mesh, gg, ff,  t)
+   !====================================
 
-!  << g.(Df) >>   ===>   t
+   !  << g.(Df) >>   ===>   t
 
    USE Gauss_points
 
@@ -1103,7 +1134,7 @@ SUBROUTINE ts_01 (mesh, gg, ff,  t)
          s = 0
          DO k = 1, k_d
             s = s + SUM(gg(k, jj(:,m)) * ww(:,l))   &
-                  * SUM(ff(jj(:,m)) * dw(k,:,l,m))
+                 * SUM(ff(jj(:,m)) * dw(k,:,l,m))
          ENDDO
 
          t = t + s * rj(l,m)
@@ -1111,14 +1142,14 @@ SUBROUTINE ts_01 (mesh, gg, ff,  t)
       ENDDO
    ENDDO
 
-END SUBROUTINE ts_01
+ END SUBROUTINE ts_01
 
-!------------------------------------------------------------------------------
+ !------------------------------------------------------------------------------
 
-SUBROUTINE tb_01 (mesh, gg, ff,  t)
-!====================================
+ SUBROUTINE tb_01 (mesh, gg, ff,  t)
+   !====================================
 
-!  << (kxg).(Df) >>   ===>   t    (two dimensions only)
+   !  << (kxg).(Df) >>   ===>   t    (two dimensions only)
 
    USE Gauss_points
 
@@ -1146,21 +1177,21 @@ SUBROUTINE tb_01 (mesh, gg, ff,  t)
       DO l = 1, l_G
 
          s =   SUM(gg(2, jj(:,m)) * ww(:,l)) * SUM(ff(jj(:,m)) * dw(1,:,l,m)) &
-             - SUM(gg(1, jj(:,m)) * ww(:,l)) * SUM(ff(jj(:,m)) * dw(2,:,l,m))
+              - SUM(gg(1, jj(:,m)) * ww(:,l)) * SUM(ff(jj(:,m)) * dw(2,:,l,m))
 
          t = t + s * rj(l,m)
 
       ENDDO
    ENDDO
 
-END SUBROUTINE tb_01
+ END SUBROUTINE tb_01
 
-!------------------------------------------------------------------------------
+ !------------------------------------------------------------------------------
 
-SUBROUTINE tb_10 (mesh, gg, ff,  t)
-!====================================
+ SUBROUTINE tb_10 (mesh, gg, ff,  t)
+   !====================================
 
-!  << (k.Dxg) f >>   ===>   t    (two dimensions only)
+   !  << (k.Dxg) f >>   ===>   t    (two dimensions only)
 
    USE Gauss_points
 
@@ -1188,21 +1219,21 @@ SUBROUTINE tb_10 (mesh, gg, ff,  t)
       DO l = 1, l_G
 
          s =   SUM(gg(2, jj(:,m)) * dw(1,:,l,m))  &
-             - SUM(gg(1, jj(:,m)) * dw(2,:,l,m))
+              - SUM(gg(1, jj(:,m)) * dw(2,:,l,m))
 
          t = t + s * SUM(ff(jj(:,m)) * ww(:,l)) * rj(l,m)
 
       ENDDO
    ENDDO
 
-END SUBROUTINE tb_10
+ END SUBROUTINE tb_10
 
-!------------------------------------------------------------------------------
+ !------------------------------------------------------------------------------
 
-SUBROUTINE tv_11 (mesh, g1, g2,  t)
-!====================================
+ SUBROUTINE tv_11 (mesh, g1, g2,  t)
+   !====================================
 
-!  << (D.g1) (D.g2) >>   ===>   t
+   !  << (D.g1) (D.g2) >>   ===>   t
 
    USE Gauss_points
 
@@ -1235,14 +1266,14 @@ SUBROUTINE tv_11 (mesh, g1, g2,  t)
       ENDDO
    ENDDO
 
-END SUBROUTINE tv_11
+ END SUBROUTINE tv_11
 
-!------------------------------------------------------------------------------
+ !------------------------------------------------------------------------------
 
-SUBROUTINE tc_11 (mesh, g1, g2,  t)
-!====================================
+ SUBROUTINE tc_11 (mesh, g1, g2,  t)
+   !====================================
 
-!  << k.(Dxg1) k.(Dxg2) >>   ===>   t    (two dimensions only)
+   !  << k.(Dxg1) k.(Dxg2) >>   ===>   t    (two dimensions only)
 
    USE Gauss_points
 
@@ -1268,23 +1299,23 @@ SUBROUTINE tc_11 (mesh, g1, g2,  t)
       DO l = 1, l_G
 
          s = (   SUM(g1(2, jj(:,m)) * dw(1,:,l,m))    &
-               - SUM(g1(1, jj(:,m)) * dw(2,:,l,m)) )  &
-           * (   SUM(g2(2, jj(:,m)) * dw(1,:,l,m))    &
-               - SUM(g2(1, jj(:,m)) * dw(2,:,l,m)) )
+              - SUM(g1(1, jj(:,m)) * dw(2,:,l,m)) )  &
+              * (   SUM(g2(2, jj(:,m)) * dw(1,:,l,m))    &
+              - SUM(g2(1, jj(:,m)) * dw(2,:,l,m)) )
 
          t = t + s * rj(l,m)
 
       ENDDO
    ENDDO
 
-END SUBROUTINE tc_11
+ END SUBROUTINE tc_11
 
-!------------------------------------------------------------------------------
+ !------------------------------------------------------------------------------
 
-SUBROUTINE tb_Jac (mesh, pp, uu, ff,  t)
-!=========================================
+ SUBROUTINE tb_Jac (mesh, pp, uu, ff,  t)
+   !=========================================
 
-!  < J(u,p) f >   ===>   t    (two dimensions only)
+   !  < J(u,p) f >   ===>   t    (two dimensions only)
 
    USE Gauss_points
 
@@ -1310,21 +1341,21 @@ SUBROUTINE tb_Jac (mesh, pp, uu, ff,  t)
       DO l = 1, l_G
 
          s = SUM(uu(jj(:,m)) * dw(1,:,l,m)) * SUM(pp(jj(:,m)) * dw(2,:,l,m)) &
-           - SUM(uu(jj(:,m)) * dw(2,:,l,m)) * SUM(pp(jj(:,m)) * dw(1,:,l,m))
+              - SUM(uu(jj(:,m)) * dw(2,:,l,m)) * SUM(pp(jj(:,m)) * dw(1,:,l,m))
 
          t = t + s * SUM(ff(jj(:,m)) * ww(:,l)) * rj(l,m)
 
       ENDDO
    ENDDO
 
-END SUBROUTINE tb_Jac
+ END SUBROUTINE tb_Jac
 
-!------------------------------------------------------------------------------
+ !------------------------------------------------------------------------------
 
-SUBROUTINE tb_101 (mesh, pp, uu, ff,  t)
-!=========================================
+ SUBROUTINE tb_101 (mesh, pp, uu, ff,  t)
+   !=========================================
 
-!  < u k x (Dp) . Df >   ===>   t    (two dimensions only)
+   !  < u k x (Dp) . Df >   ===>   t    (two dimensions only)
 
    USE Gauss_points
 
@@ -1350,21 +1381,21 @@ SUBROUTINE tb_101 (mesh, pp, uu, ff,  t)
       DO l = 1, l_G
 
          s = - SUM(pp(jj(:,m)) * dw(2,:,l,m)) * SUM(ff(jj(:,m)) * dw(1,:,l,m)) &
-             + SUM(pp(jj(:,m)) * dw(1,:,l,m)) * SUM(ff(jj(:,m)) * dw(2,:,l,m))
+              + SUM(pp(jj(:,m)) * dw(1,:,l,m)) * SUM(ff(jj(:,m)) * dw(2,:,l,m))
 
          t = t + SUM(uu(jj(:,m)) * ww(:,l)) * s * rj(l,m)
 
       ENDDO
    ENDDO
 
-END SUBROUTINE tb_101
+ END SUBROUTINE tb_101
 
-!------------------------------------------------------------------------------
+ !------------------------------------------------------------------------------
 
-SUBROUTINE tb_Jac_s (mesh, pp, uu, ff,  t)
-!============================================
+ SUBROUTINE tb_Jac_s (mesh, pp, uu, ff,  t)
+   !============================================
 
-!  < u (T.Dp) f >_s   ===>   t    (two dimensions only)
+   !  < u (T.Dp) f >_s   ===>   t    (two dimensions only)
 
    USE Gauss_points
 
@@ -1398,14 +1429,14 @@ SUBROUTINE tb_Jac_s (mesh, pp, uu, ff,  t)
       ENDDO
    ENDDO
 
-END SUBROUTINE tb_Jac_s
+ END SUBROUTINE tb_Jac_s
 
-!------------------------------------------------------------------------------
+ !------------------------------------------------------------------------------
 
-SUBROUTINE tb_11s_s (mesh, pp, ff,  t)
-!========================================
+ SUBROUTINE tb_11s_s (mesh, pp, ff,  t)
+   !========================================
 
-!  < (T.D_s f) |D_s p|^2 >_s   ===>   t    (two dimensions only)
+   !  < (T.D_s f) |D_s p|^2 >_s   ===>   t    (two dimensions only)
 
    USE Gauss_points
 
@@ -1437,14 +1468,14 @@ SUBROUTINE tb_11s_s (mesh, pp, ff,  t)
       ENDDO
    ENDDO
 
-END SUBROUTINE tb_11s_s
+ END SUBROUTINE tb_11s_s
 
-!------------------------------------------------------------------------------
+ !------------------------------------------------------------------------------
 
-SUBROUTINE ts_00_s (mesh, fs, ff, t)
-!==========================================
+ SUBROUTINE ts_00_s (mesh, fs, ff, t)
+   !==========================================
 
-!  < fs f >_s   ===>   t
+   !  < fs f >_s   ===>   t
 
    USE Gauss_points
 
@@ -1470,15 +1501,15 @@ SUBROUTINE ts_00_s (mesh, fs, ff, t)
       DO ls = 1, l_Gs
 
          t = t + SUM(fs(is(:,ms)) * wws(:,ls))   &
-               * SUM(ff(js(:,ms)) * wws(:,ls)) * rjs(ls,ms)
+              * SUM(ff(js(:,ms)) * wws(:,ls)) * rjs(ls,ms)
 
       ENDDO
    ENDDO
 
-END SUBROUTINE ts_00_s
+ END SUBROUTINE ts_00_s
 
-SUBROUTINE ns_anal (mesh, ff, f_anal,  t)
-!===============================================
+ SUBROUTINE ns_anal (mesh, ff, f_anal,  t)
+   !===============================================
    USE Gauss_points
    IMPLICIT NONE
    REAL(KIND=8), DIMENSION(:),   INTENT(IN)  :: ff
@@ -1508,12 +1539,12 @@ SUBROUTINE ns_anal (mesh, ff, f_anal,  t)
    ENDDO
 
    t = ABS(t)
-END SUBROUTINE ns_anal
+ END SUBROUTINE ns_anal
 
-SUBROUTINE ns_anal_0 (mesh, ff, f_anal,  t)
-!===============================================
+ SUBROUTINE ns_anal_0 (mesh, ff, f_anal,  t)
+   !===============================================
 
-!  sqrt(< f^2 >)   ===>   t
+   !  sqrt(< f^2 >)   ===>   t
 
    USE Gauss_points
 
@@ -1550,10 +1581,10 @@ SUBROUTINE ns_anal_0 (mesh, ff, f_anal,  t)
    t = SQRT(t)
 
 
-END SUBROUTINE ns_anal_0
+ END SUBROUTINE ns_anal_0
 
-SUBROUTINE ns_anal_infty (mesh, ff, f_anal,  t)
-!===============================================
+ SUBROUTINE ns_anal_infty (mesh, ff, f_anal,  t)
+   !===============================================
 
    USE Gauss_points
 
@@ -1591,8 +1622,8 @@ SUBROUTINE ns_anal_infty (mesh, ff, f_anal,  t)
  END SUBROUTINE ns_anal_infty
 
 
-SUBROUTINE ns_anal_max_min (mesh, ff, tmax, tmin)
-!===============================================
+ SUBROUTINE ns_anal_max_min (mesh, ff, tmax, tmin)
+   !===============================================
 
    USE Gauss_points
 
@@ -1627,12 +1658,12 @@ SUBROUTINE ns_anal_max_min (mesh, ff, tmax, tmin)
       ENDDO
    ENDDO
  END SUBROUTINE ns_anal_max_min
- 
 
-SUBROUTINE nv_anal_0 (mesh, ff, f_anal,  t)
-!===============================================
 
-!  sqrt(< f^2 >)   ===>   t
+ SUBROUTINE nv_anal_0 (mesh, ff, f_anal,  t)
+   !===============================================
+
+   !  sqrt(< f^2 >)   ===>   t
 
    USE Gauss_points
 
@@ -1671,12 +1702,12 @@ SUBROUTINE nv_anal_0 (mesh, ff, f_anal,  t)
    t = SQRT(t)
 
 
-END SUBROUTINE nv_anal_0
+ END SUBROUTINE nv_anal_0
 
-SUBROUTINE nv_anal_l1 (mesh, ff, f_anal,  t)
-!===============================================
+ SUBROUTINE nv_anal_l1 (mesh, ff, f_anal,  t)
+   !===============================================
 
-!  (< |f| >)   ===>   t
+   !  (< |f| >)   ===>   t
 
    USE Gauss_points
 
@@ -1698,7 +1729,7 @@ SUBROUTINE nv_anal_l1 (mesh, ff, f_anal,  t)
    me => mesh%me
 
    t = 0
- 
+
    DO m = 1, me
       index = (m-1)*l_G
       DO l = 1, l_G; index = index + 1
@@ -1712,13 +1743,13 @@ SUBROUTINE nv_anal_l1 (mesh, ff, f_anal,  t)
       ENDDO
    ENDDO
 
-END SUBROUTINE nv_anal_l1
+ END SUBROUTINE nv_anal_l1
 
 
-SUBROUTINE ns_anal_l1 (mesh, ff, f_anal,  t)
-!===============================================
+ SUBROUTINE ns_anal_l1 (mesh, ff, f_anal,  t)
+   !===============================================
 
-!  < |f| >)   ===>   t
+   !  < |f| >)   ===>   t
 
    USE Gauss_points
 
@@ -1752,12 +1783,12 @@ SUBROUTINE ns_anal_l1 (mesh, ff, f_anal,  t)
       ENDDO
    ENDDO
 
-END SUBROUTINE ns_anal_l1
+ END SUBROUTINE ns_anal_l1
 
-SUBROUTINE nb_anal_1 (mesh, f_anal, gg,  t)
-!===============================
+ SUBROUTINE nb_anal_1 (mesh, f_anal, gg,  t)
+   !===============================
 
-!  sqrt(< (D x g . k) (D x g . k) >)   ===>   t     ( 2d only )
+   !  sqrt(< (D x g . k) (D x g . k) >)   ===>   t     ( 2d only )
 
    USE Gauss_points
 
@@ -1785,8 +1816,8 @@ SUBROUTINE nb_anal_1 (mesh, f_anal, gg,  t)
       DO l = 1, l_G; index = index + 1
 
          s = (f_anal(index) &
-               -SUM(gg(2,jj(:,m)) * dw(1,:,l,m)   &
-                  - gg(1,jj(:,m)) * dw(2,:,l,m)))**2
+              -SUM(gg(2,jj(:,m)) * dw(1,:,l,m)   &
+              - gg(1,jj(:,m)) * dw(2,:,l,m)))**2
 
          t = t + s * rj(l,m)
 
@@ -1795,12 +1826,12 @@ SUBROUTINE nb_anal_1 (mesh, f_anal, gg,  t)
 
    t = SQRT(t)
 
-END SUBROUTINE nb_anal_1
+ END SUBROUTINE nb_anal_1
 
-SUBROUTINE ns_anal_1 (mesh, ff, f_anal, gdf_anal,  t)
-!====================================
+ SUBROUTINE ns_anal_1 (mesh, ff, f_anal, gdf_anal,  t)
+   !====================================
 
-!  SQRT << (ff-f_anal)^2 + ((Df-gdf_anal))^2 >>   ===>   t
+   !  SQRT << (ff-f_anal)^2 + ((Df-gdf_anal))^2 >>   ===>   t
 
    USE Gauss_points
 
@@ -1856,12 +1887,12 @@ SUBROUTINE ns_anal_1 (mesh, ff, f_anal, gdf_anal,  t)
 
    t = SQRT(t)
 
-END SUBROUTINE ns_anal_1
+ END SUBROUTINE ns_anal_1
 
-SUBROUTINE ns_anal_w11 (mesh, ff, f_anal, gdf_anal,  t)
-!====================================
+ SUBROUTINE ns_anal_w11 (mesh, ff, f_anal, gdf_anal,  t)
+   !====================================
 
-!   << |ff-f_anal| + ||Df-gdf_anal|| >>   ===>   t
+   !   << |ff-f_anal| + ||Df-gdf_anal|| >>   ===>   t
 
    USE Gauss_points
 
@@ -1915,14 +1946,14 @@ SUBROUTINE ns_anal_w11 (mesh, ff, f_anal, gdf_anal,  t)
       ENDDO
    ENDDO
 
-END SUBROUTINE ns_anal_w11
+ END SUBROUTINE ns_anal_w11
 
-!------------------------------------------------------------------------------
+ !------------------------------------------------------------------------------
 
-SUBROUTINE ns_anal_adv (mesh, gg, ff, f_anal, gdf_anal,  t)
-!====================================
+ SUBROUTINE ns_anal_adv (mesh, gg, ff, f_anal, gdf_anal,  t)
+   !====================================
 
-!  SQRT << (ff-f_anal)^2 + (g.(Df-gdf_anal))^2 >>   ===>   t
+   !  SQRT << (ff-f_anal)^2 + (g.(Df-gdf_anal))^2 >>   ===>   t
 
    USE Gauss_points
 
@@ -1981,12 +2012,12 @@ SUBROUTINE ns_anal_adv (mesh, gg, ff, f_anal, gdf_anal,  t)
 
    t = SQRT(t)
 
-END SUBROUTINE ns_anal_adv
+ END SUBROUTINE ns_anal_adv
 
-SUBROUTINE ns_anal_adv_l1 (mesh, gg, ff, f_anal, gdf_anal,  t)
-!====================================
+ SUBROUTINE ns_anal_adv_l1 (mesh, gg, ff, f_anal, gdf_anal,  t)
+   !====================================
 
-!  SQRT << (ff-f_anal)^2 + (g.(Df-gdf_anal))^2 >>   ===>   t
+   !  SQRT << (ff-f_anal)^2 + (g.(Df-gdf_anal))^2 >>   ===>   t
 
    USE Gauss_points
 
@@ -2044,14 +2075,14 @@ SUBROUTINE ns_anal_adv_l1 (mesh, gg, ff, f_anal, gdf_anal,  t)
    ENDDO
 
 
-END SUBROUTINE ns_anal_adv_l1
+ END SUBROUTINE ns_anal_adv_l1
 
-!------------------------------------------------------------------------------
+ !------------------------------------------------------------------------------
 
-SUBROUTINE ns_test (mesh, gg, ff,  t)
-!====================================
+ SUBROUTINE ns_test (mesh, gg, ff,  t)
+   !====================================
 
-!  SQRT << (g.Df,f >>   ===>   t
+   !  SQRT << (g.Df,f >>   ===>   t
 
    USE Gauss_points
 
@@ -2106,12 +2137,12 @@ SUBROUTINE ns_test (mesh, gg, ff,  t)
       ENDDO
    ENDDO
 
-END SUBROUTINE ns_test
+ END SUBROUTINE ns_test
 
-SUBROUTINE n_bloc_0 (mesh, gg, nb_bloc, bloc_size, t)
-!===============================
+ SUBROUTINE n_bloc_0 (mesh, gg, nb_bloc, bloc_size, t)
+   !===============================
 
-!  sqrt(<< g.g >>)   ===>   t
+   !  sqrt(<< g.g >>)   ===>   t
 
    USE Gauss_points
 
@@ -2153,12 +2184,12 @@ SUBROUTINE n_bloc_0 (mesh, gg, nb_bloc, bloc_size, t)
 
    t = SQRT(t)
 
-END SUBROUTINE n_bloc_0
+ END SUBROUTINE n_bloc_0
 
-SUBROUTINE ns_l1 (mesh, ff, t)
-!===============================================
+ SUBROUTINE ns_l1 (mesh, ff, t)
+   !===============================================
 
-!  < |f| >)   ===>   t
+   !  < |f| >)   ===>   t
 
    USE Gauss_points
 
@@ -2189,14 +2220,14 @@ SUBROUTINE ns_l1 (mesh, ff, t)
       ENDDO
    ENDDO
 
-END SUBROUTINE ns_l1
+ END SUBROUTINE ns_l1
 
 
-!------------------------------------------------------------------------------
-SUBROUTINE ns_01_hybrid (uu_mesh, pp_mesh, ff, gg,  u0_c)
-!================================================
+ !------------------------------------------------------------------------------
+ SUBROUTINE ns_01_hybrid (uu_mesh, pp_mesh, ff, gg,  u0_c)
+   !================================================
 
-!  < f, D.g >   ===>   u0_c
+   !  < f, D.g >   ===>   u0_c
 
    USE Gauss_points
 
@@ -2225,27 +2256,27 @@ SUBROUTINE ns_01_hybrid (uu_mesh, pp_mesh, ff, gg,  u0_c)
 
    SELECT CASE(k_d)
 
-      CASE(2)
-         DO l = 1, l_G       
-!         w_c(1,:) = ww(1,:) + 0.5*(ww(5,:) + ww(6,:)) 
-!         w_c(2,:) = ww(2,:) + 0.5*(ww(6,:) + ww(4,:)) 
-!         w_c(3,:) = ww(3,:) + 0.5*(ww(4,:) + ww(5,:)) 
+   CASE(2)
+      DO l = 1, l_G       
+         !         w_c(1,:) = ww(1,:) + 0.5*(ww(5,:) + ww(6,:)) 
+         !         w_c(2,:) = ww(2,:) + 0.5*(ww(6,:) + ww(4,:)) 
+         !         w_c(3,:) = ww(3,:) + 0.5*(ww(4,:) + ww(5,:)) 
          w_c(1,l) = ww(1,l) + 0.5*(ww(n_w-1,l) + ww(n_w,l)) 
          w_c(2,l) = ww(2,l) + 0.5*(ww(n_w,l) + ww(4,l)) 
          w_c(3,l) = ww(3,l) + 0.5*(ww(4,l) + ww(n_w-1,l)) 
-         END DO  
+      END DO
 
-      CASE(3)
-         DO l = 1, l_G       
-!         w_c(1,:) = ww(1,:) + 0.5*(ww(n_w-2,:) + ww(n_w-1,:) + ww(n_w,:)) 
-!         w_c(2,:) = ww(2,:) + 0.5*(ww(6,:)     + ww(n_w-3,:) + ww(n_w,:))
-!         w_c(3,:) = ww(3,:) + 0.5*(ww(5,:)     + ww(n_w-3,:) + ww(n_w-1,:)) 
-!         w_c(4,:) = ww(4,:) + 0.5*(ww(5,:)     + ww(6,:)     + ww(n_w-2,:)) 
+   CASE(3)
+      DO l = 1, l_G       
+         !         w_c(1,:) = ww(1,:) + 0.5*(ww(n_w-2,:) + ww(n_w-1,:) + ww(n_w,:)) 
+         !         w_c(2,:) = ww(2,:) + 0.5*(ww(6,:)     + ww(n_w-3,:) + ww(n_w,:))
+         !         w_c(3,:) = ww(3,:) + 0.5*(ww(5,:)     + ww(n_w-3,:) + ww(n_w-1,:)) 
+         !         w_c(4,:) = ww(4,:) + 0.5*(ww(5,:)     + ww(6,:)     + ww(n_w-2,:)) 
          w_c(1,l) = ww(1,l) + 0.5*(ww(n_w-2,l)  + ww(n_w-1,l) + ww(n_w,l)) 
          w_c(2,l) = ww(2,l) + 0.5*(ww(n_w-4,l)  + ww(n_w-3,l) + ww(n_w,l))
          w_c(3,l) = ww(3,l) + 0.5*(ww(n_w-5,l)  + ww(n_w-3,l) + ww(n_w-1,l)) 
          w_c(4,l) = ww(4,l) + 0.5*(ww(n_w-5,l)  + ww(n_w-4,l) + ww(n_w-2,l)) 
-         END DO  
+      END DO
 
    END SELECT
 
@@ -2267,7 +2298,7 @@ SUBROUTINE ns_01_hybrid (uu_mesh, pp_mesh, ff, gg,  u0_c)
             END DO
          END DO
 
-! FINIR d'optimiser la boucle.
+         ! FINIR d'optimiser la boucle.
 
          u0_c = u0_c + dgl * SUM(ff(jj_c(:,m))*w_c(:,l)) * rj(l,m)
 
@@ -2275,12 +2306,12 @@ SUBROUTINE ns_01_hybrid (uu_mesh, pp_mesh, ff, gg,  u0_c)
 
    ENDDO
 
-END SUBROUTINE ns_01_hybrid
+ END SUBROUTINE ns_01_hybrid
 
-SUBROUTINE eval_h (mesh, hh)
-!===============================
+ SUBROUTINE eval_h (mesh, hh)
+   !===============================
 
-!  h  ===>   t
+   !  h  ===>   t
 
    USE Gauss_points
 
@@ -2307,6 +2338,6 @@ SUBROUTINE eval_h (mesh, hh)
       hh(jj(:,m)) =  hh(jj(:,m)) + h 
    ENDDO
 
-END SUBROUTINE eval_h 
+ END SUBROUTINE eval_h
 
 END MODULE fem_tn
