@@ -34,7 +34,11 @@ CONTAINS
     this%lp_of_l = 0
     this%C(this%s+1)=1.d0
     SELECT CASE(asv)
- 
+
+    CASE(11) !===Equi RK2, ERK(2,2;1) two-stage, 2nd order
+       this%C=(/0.d0,1.d0/)
+       this%lp_of_l=(/1,1/)
+       this%A(2,1)=this%C(2)
     CASE(21) !===Equi RK2, ERK(2,2;1) two-stage, 2nd order
        this%C=(/0.d0,0.5d0,1.d0/)
        this%lp_of_l=(/1,1,2/)

@@ -69,6 +69,16 @@ CONTAINS
     nrhs = 1   !===Number of right-hand-sides
     mnum = ABS(mnum_in)
     mtype=pardiso_param(mnum)%mtype !===matrix type
+
+    IF (PRESENT(opt_memory_release)) THEN
+       IF (opt_memory_release) THEN
+          phase = -1 !===memory release
+          n = SIZE(ia)-1   
+          CALL pardiso (my_pardiso_pt(mnum)%pt, maxfct, mnum, mtype, phase, n, a, ia, ja, &
+               idum, nrhs, pardiso_param(mnum)%parm, msglvl, ddum, ddum, error)
+       END IF
+       RETURN
+    END IF
     
     IF (mnum_in<0) THEN !===Factorization
        IF (.NOT.ALLOCATED(my_pardiso_pt(mnum)%pt)) THEN
@@ -103,13 +113,5 @@ CONTAINS
        STOP
     ENDIF
 
-    IF (PRESENT(opt_memory_release)) THEN
-       IF (opt_memory_release) THEN
-          phase = -1 !===memory release
-          n = SIZE(ia)-1   
-          CALL pardiso (my_pardiso_pt(mnum)%pt, maxfct, mnum, mtype, phase, n, a, ia, ja, &
-               idum, nrhs, pardiso_param(mnum)%parm, msglvl, ddum, ddum, error)
-       END IF
-    END IF
   END SUBROUTINE solve_pardiso
 END MODULE pardiso_solve

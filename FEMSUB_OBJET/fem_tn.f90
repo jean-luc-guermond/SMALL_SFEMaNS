@@ -620,10 +620,10 @@ SUBROUTINE nv_1_bloc (mesh, gg,  t)
    !===============================
    !  sqrt(<< D.g, D.g >>)   ===>   t
    USE Gauss_points
-   IMPLICIT NONE
+   IMPLICIT NONE 
    REAL(KIND=8), DIMENSION(:), INTENT(IN)  :: gg
    REAL(KIND=8),                 INTENT(OUT) :: t
-   INTEGER ::  m, l, k, n, bloc_size
+   INTEGER ::  m, l, k, n
    REAL(KIND=8) :: s
    TYPE(mesh_type), TARGET                     :: mesh
    INTEGER,      DIMENSION(:,:), POINTER       :: jj
@@ -631,7 +631,6 @@ SUBROUTINE nv_1_bloc (mesh, gg,  t)
    CALL gauss(mesh)
    jj => mesh%jj
    me => mesh%me
-   bloc_size = SIZE(gg)/k_d
    t = 0
    DO m = 1, me
       DO l = 1, l_G
@@ -2221,6 +2220,44 @@ SUBROUTINE nv_1_bloc (mesh, gg,  t)
    ENDDO
 
  END SUBROUTINE ns_l1
+
+ SUBROUTINE ns_linfty (mesh, ff, t)
+   !===============================================
+
+   !  < |f| >)   ===>   t
+
+   USE Gauss_points
+
+   IMPLICIT NONE
+
+   REAL(KIND=8), DIMENSION(:),   INTENT(IN)  :: ff
+   REAL(KIND=8),                 INTENT(OUT) :: t
+
+   INTEGER ::  m, l, n
+   REAL(KIND=8) :: fl
+
+   TYPE(mesh_type), TARGET                     :: mesh
+   INTEGER,      DIMENSION(:,:), POINTER       :: jj
+   INTEGER,                      POINTER       :: me
+
+   CALL gauss(mesh)
+   jj => mesh%jj
+   me => mesh%me
+   t = MAXVAL(ABS(ff))
+
+   DO m = 1, me
+      DO l = 1, l_G
+         fl = 0
+         DO n = 1, n_w
+            fl = fl + ff(jj(n,m)) * ww(n,l)
+         END DO
+         t = max(t, ABS(fl))
+      ENDDO
+   ENDDO
+
+ END SUBROUTINE ns_linfty
+
+ 
 
 
  !------------------------------------------------------------------------------

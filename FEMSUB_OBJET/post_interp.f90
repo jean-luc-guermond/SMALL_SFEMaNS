@@ -1,6 +1,6 @@
 MODULE mesh_interpolation
 
-  PUBLIC :: coupe, mesh_interp, inside, FE_interpolation
+  PUBLIC :: coupe, mesh_interp, inside, FE_interpolation, sampled_cut
   PRIVATE
 
   !============================================================================!
@@ -128,6 +128,64 @@ CONTAINS
 
   END SUBROUTINE coupe
 
+  SUBROUTINE sampled_cut(mesh,r_sample, n_point,field,file_name,opt_out)
+    USE def_type_mesh
+    IMPLICIT NONE
+    TYPE(mesh_type)                          :: mesh
+    REAL(KIND=8), DIMENSION(2,n_point),   INTENT(IN) :: r_sample
+    INTEGER,                      INTENT(IN) :: n_point
+    REAL(KIND=8), DIMENSION(:),   INTENT(IN) :: field
+    CHARACTER(*),                 INTENT(IN) :: file_name
+    REAL(KIND=8), DIMENSION(:),   OPTIONAL   :: opt_out
+    REAL(KIND=8), DIMENSION(2)       :: r_init, r_goal
+    REAL(KIND=8) :: s, valeur
+    INTEGER :: m, n, m_init, m_goal
+    LOGICAL :: ok
+
+    OPEN (UNIT = 20, FILE = file_name, FORM = 'formatted', STATUS = 'unknown')
+    WRITE (20,*) "$DATA=CURVE2D"
+    WRITE(20,'(2(A,e11.5,2x,e11.5),A)') '%toplabel = " x0=',r_sample(:,1),',  x1=',r_sample(:,n_point),' " '
+    WRITE(20,*) ' %xlabel = " " '
+    WRITE(20,*) ' %ylabel = " " '
+    WRITE(20,*) ' '
+
+
+    !d = SQRT(pd_scal(r_0-r_1,r_0-r_1))
+    r_init = r_sample(:,1)
+    DO m = 1, mesh%me ! search of element containing r
+
+       IF (inside(mesh,m,r_init)) THEN
+          m_init = m
+          EXIT
+       END IF
+
+    END DO
+
+    s = 0.d0
+    valeur = SUM(field(mesh%jj(:,m_init)) * ff(mesh,m_init,r_init))
+    WRITE(20,100) s, valeur
+    IF (present(opt_out)) opt_out(1) = valeur
+    DO n = 2, n_point
+       !s = d*(n-1.d0)/(n_point-1.d0)
+       r_goal = r_sample(:,n) !r_0 + (n-1)*(r_1-r_0)/(n_point-1)
+       CALL find_elem(mesh, r_init, m_init, r_goal, m_goal, ok)
+       IF (.NOT.ok) THEN
+          WRITE(*,*) ' La coupe sort du domaine'
+          RETURN
+       END IF
+       r_init = r_goal
+       m_init = m_goal
+       !write(*,*) ' m_goal',m_goal, ok,  r_goal
+       valeur = SUM(field( mesh%jj(:,m_goal)) * ff(mesh,m_goal,r_goal))
+       WRITE(20,100) s, valeur
+       IF (present(opt_out)) opt_out(n) = valeur
+    END DO
+
+100 FORMAT(2(e11.5,2X))
+    CLOSE(20)
+
+  END SUBROUTINE sampled_cut
+  
   FUNCTION pd_scal(x,y)
 
     IMPLICIT NONE
@@ -193,6 +251,23 @@ CONTAINS
        ff(4) = x * y * four
        ff(5) = y * (one - x - y) * four
        ff(6) = x * (one - x - y) * four
+    ELSE IF (mesh%gauss%n_w==10) THEN
+       ff(1) = -0.9d1/0.2d1*x**3 - 0.27d2/0.2d1*x**2*y - 0.27d2/0.2d1*x*y**2 &
+         - 0.9d1/0.2d1*y**3 + 0.9d1*x**2 + 0.18d2*x*y + 0.9d1*y**2 &
+         - 0.11d2/0.2d1*x - 0.11d2/0.2d1*y + 0.1d1
+       ff(2) = 0.9d1/0.2d1*x**3 - 0.9d1/0.2d1*x**2 + x
+       ff(3) = 0.9d1/0.2d1*y**3 - 0.9d1/0.2d1*y**2 + y
+       ff(4) = 0.27d2/0.2d1*x**2*y - 0.9d1/0.2d1*x*y
+       ff(5) = 0.27d2/0.2d1*x*y**2 - 0.9d1/0.2d1*x*y
+       ff(6) = 0.27d2/0.2d1*x**2*y + 0.27d2*x*y**2 + 0.27d2 / 0.2d1*y**3 &
+         - 0.45d2/0.2d1*x*y - 0.45d2/0.2d1*y**2 + 0.9d1*y
+       ff(7) = -0.27d2/0.2d1*x*y**2 - 0.27d2/0.2d1*y**3 + 0.9d1/0.2d1*x*y &
+         + 0.18d2*y**2 - 0.9d1/0.2d1*y
+       ff(8) = 0.27d2/0.2d1*x**3 + 0.27d2*x**2*y + 0.27d2/0.2d1*x*y**2 &
+         - 0.45d2/0.2d1*x**2 - 0.45d2/0.2d1*x*y + 0.9d1*x
+       ff(9) = -0.27d2/0.2d1*x**3 - 0.27d2/0.2d1*x**2*y + 0.18d2*x**2 &
+         + 0.9d1/0.2d1*x*y - 0.9d1/0.2d1*x
+       ff(10) = -27*x**2*y - 27*x*y**2 + 27*x*y
     ELSE
        WRITE(*,*) ' BUG in ff '
        STOP

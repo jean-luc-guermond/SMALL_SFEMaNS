@@ -153,11 +153,8 @@ CONTAINS
 
   SUBROUTINE qs_11_M (mesh, alpha, ia, ja,  a0)
     !=================================================
-
     !  alpha << (Dw), (D_) >>   ===>   A0    incremental accumulation
-
-    USE Gauss_points
-
+    USE def_type_mesh
     IMPLICIT NONE
     TYPE(mesh_type)                   :: mesh
     REAL(KIND=8),                 INTENT(IN)    :: alpha

@@ -66,14 +66,15 @@ CONTAINS
        ALLOCATE(rr_lect(kd,np))
        rr_lect = opt_mesh%rr
     ELSE
-       WRITE (*,*) 'Loading mesh-file ...'
        IF (mesh_formatted) THEN
           OPEN(30,FILE=TRIM(ADJUSTL(dir))//'/'//TRIM(ADJUSTL(fil)),FORM='formatted')
        ELSE
           OPEN(30,FILE=TRIM(ADJUSTL(dir))//'/'//TRIM(ADJUSTL(fil)),FORM='unformatted')
        END IF
+       WRITE (*,*) 'Loading mesh-file ...', TRIM(ADJUSTL(dir))//'/'//TRIM(ADJUSTL(fil))
 
        !===Read P1 mesh
+       
        IF (mesh_formatted) THEN
           READ  (30, *)  np,  nw,  me,  nws,  mes
        ELSE
@@ -396,7 +397,7 @@ CONTAINS
           IF (iso) THEN
              DO ms = 1, SIZE(jjs_in,2)
                 DO ns = 1, SIZE(jjs_in,1) 
-                   dist = SQRT(SUM((rr_in(:,n1)-rr_in(:,jjs_in(ns,ms)))**2))   
+                   dist = SQRT(SUM((rr_in(:,n1)-rr_in(:,jjs_in(ns,ms)))**2))
                    IF (dist.LE.epsilon) THEN
                       ns1 = MODULO(ns,   SIZE(jjs_in,1)) + 1 
                       dist = SQRT(SUM((rr_in(:,n2)-rr_in(:,jjs_in(ns1,ms)))**2))
@@ -410,7 +411,6 @@ CONTAINS
              WRITE(*,*) ' BUG in create_iso_grid'
              !===Algorithm not designed yet for internal interfaces
              STOP
-
 100          index = 1
              ref = SQRT(SUM((rr_in(:,n1)-rr_in(:,n2))**2))
              DO ms = 1, SIZE(jjs_in,2)
@@ -2045,8 +2045,8 @@ CONTAINS
     END DO
     IF (SIZE(mesh%rr,1)==2) THEN
        IF (edge/=(3*mesh%me - mesh%mes)/2) THEN
-          WRITE(*,*) ' BUG in prep_interfaces, edge/=(3*mesh%me + mesh%mes)/2'
-          WRITE(*,*) ' edge ', edge, (3*mesh%me - mesh%mes)/2
+          WRITE(*,*) ' BUG in prep_interfaces, internal edge/=(3*mesh%me + mesh%mes)/2'
+          WRITE(*,*) ' internal edges ', edge, (3*mesh%me - mesh%mes)/2
           WRITE(*,*) ' mesh%mes ', mesh%mes, ' mesh%me ',mesh%me
           STOP
        END IF

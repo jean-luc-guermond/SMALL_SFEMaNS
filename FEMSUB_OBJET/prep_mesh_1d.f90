@@ -48,17 +48,7 @@ CONTAINS
     ALLOCATE(mesh%sides(mesh%mes))
     READ(in_unit,*) mesh%sides
 
-    SELECT CASE (type_fe)
-    CASE(1)
-       CALL GAUSS_POINTS_1d_p1(mesh)
-    CASE(2)
-       CALL GAUSS_POINTS_1d_p2(mesh)
-    CASE(3)
-       CALL GAUSS_POINTS_1d_p3(mesh)
-    CASE DEFAULT
-       WRITE(*,*) ' BUG load_mesh_1d: FE not programmed yet'
-       STOP
-    END SELECT
+    CALL gauss_points_1d(mesh,type_fe)
 
   END SUBROUTINE load_mesh_1d
 END MODULE prep_mesh_1d
